@@ -2,6 +2,7 @@ package telegram
 
 import (
 	"errors"
+	"golang.org/x/net/proxy"
 	"math/rand"
 	"net"
 
@@ -40,7 +41,7 @@ func (b *baseTelegram) dial(dc conntypes.DC,
 	}
 
 	for _, addr := range addresses {
-		conn, err := b.dialer.Dial("tcp", addr)
+		conn, err := proxy.FromEnvironmentUsing(&b.dialer).Dial("tcp", addr)
 		if err != nil {
 			b.logger.Infow("Cannot dial to Telegram", "address", addr, "error", err)
 			continue
@@ -50,6 +51,8 @@ func (b *baseTelegram) dial(dc conntypes.DC,
 			b.logger.Infow("Cannot initialize TCP socket", "address", addr, "error", err)
 			continue
 		}
+
+		b.logger.Infow("Successful dial to Telegram", "address", addr, "error", err)
 
 		return stream.NewTelegramConn(dc, conn), nil
 	}
