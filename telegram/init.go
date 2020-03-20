@@ -17,7 +17,7 @@ var (
 	initOnce sync.Once
 )
 
-func Init() {
+func Init(needMiddle bool) {
 	initOnce.Do(func() {
 		logger := zap.S().Named("telegram")
 
@@ -32,17 +32,20 @@ func Init() {
 			},
 		}
 
-		tg := &middleTelegram{
-			baseTelegram: baseTelegram{
-				dialer: net.Dialer{Timeout: telegramDialTimeout},
-				logger: logger.Named("middle"),
-			},
-		}
-		if err := tg.update(); err != nil {
-			panic(err)
-		}
-		go tg.backgroundUpdate()
+		if needMiddle {
+			tg := &middleTelegram{
+				baseTelegram: baseTelegram{
+					dialer: net.Dialer{Timeout: telegramDialTimeout},
+					logger: logger.Named("middle"),
+				},
+			}
+			if err := tg.update(); err != nil {
+				panic(err)
+			}
+			go tg.backgroundUpdate()
 
-		Middle = tg
+			Middle = tg
+		}
+
 	})
 }

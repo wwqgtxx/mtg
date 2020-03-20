@@ -44,13 +44,15 @@ func Proxy() error { // nolint: funlen
 	zap.ReplaceGlobals(logger)
 	defer logger.Sync() // nolint: errcheck
 
-	if err := config.InitPublicAddress(ctx); err != nil {
-		Fatal(err)
-	}
+	//if err := config.InitPublicAddress(ctx); err != nil {
+	//	Fatal(err)
+	//}
 
 	zap.S().Debugw("Configuration", "config", config.Printable())
 
-	if len(config.C.AdTag) > 0 {
+	needMiddle := len(config.C.AdTag) > 0
+
+	if needMiddle {
 		zap.S().Infow("Use middle proxy connection to Telegram")
 
 		diff, err := ntp.Fetch()
@@ -67,14 +69,12 @@ func Proxy() error { // nolint: funlen
 		zap.S().Infow("Use direct connection to Telegram")
 	}
 
-	PrintJSONStdout(config.GetURLs())
-
 	if err := stats.Init(ctx); err != nil {
 		Fatal(err)
 	}
 
 	antireplay.Init()
-	telegram.Init()
+	telegram.Init(needMiddle)
 	hub.Init(ctx)
 
 	proxyListener, err := net.Listen("tcp", config.C.Bind.String())
@@ -95,6 +95,8 @@ func Proxy() error { // nolint: funlen
 	if config.C.SecretMode == config.SecretModeTLS {
 		app.ClientProtocolMaker = faketls.MakeClientProtocol
 	}
+
+	PrintJSONStdout(config.GetURLs())
 
 	app.Serve(proxyListener)
 
