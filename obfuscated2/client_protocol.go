@@ -71,6 +71,10 @@ func (c *ClientProtocol) Handshake(socket conntypes.StreamReadWriteCloser) (conn
 		return nil, errors.New("unknown connection type")
 	}
 
+	if config.C.SecretMode == config.SecretModeSecured && c.connectionType != conntypes.ConnectionTypeSecure {
+		return nil, errors.New("the secured mode don't support a no secure connection")
+	}
+
 	c.connectionProtocol = conntypes.ConnectionProtocolIPv4
 	if socket.LocalAddr().IP.To4() == nil {
 		c.connectionProtocol = conntypes.ConnectionProtocolIPv6
