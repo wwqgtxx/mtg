@@ -5,9 +5,6 @@ import (
 	"os"
 	"time"
 
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
-
 	"github.com/9seconds/mtg/antireplay"
 	"github.com/9seconds/mtg/config"
 	"github.com/9seconds/mtg/faketls"
@@ -18,6 +15,8 @@ import (
 	"github.com/9seconds/mtg/stats"
 	"github.com/9seconds/mtg/telegram"
 	"github.com/9seconds/mtg/utils"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 func Proxy() error { // nolint: funlen
@@ -50,9 +49,7 @@ func Proxy() error { // nolint: funlen
 
 	zap.S().Debugw("Configuration", "config", config.Printable())
 
-	needMiddle := len(config.C.AdTag) > 0
-
-	if needMiddle {
+	if config.C.MiddleProxyMode() {
 		zap.S().Infow("Use middle proxy connection to Telegram")
 
 		diff, err := ntp.Fetch()
@@ -74,7 +71,7 @@ func Proxy() error { // nolint: funlen
 	}
 
 	antireplay.Init()
-	telegram.Init(needMiddle)
+	telegram.Init(config.C.MiddleProxyMode())
 	hub.Init(ctx)
 
 	proxyListener, err := net.Listen("tcp", config.C.Bind.String())
